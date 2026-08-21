@@ -18,7 +18,13 @@ system libraries. The whole app is 776K.
 | System | macOS 14 or later, Apple Silicon |
 | Toolchain | Xcode 16+ (Swift 6), only if building yourself |
 
-## Build
+## Install
+
+Download the notarized disk image from
+[posture.einargudni.com](https://posture.einargudni.com), drag Posture to
+Applications, sit up straight and press **Calibrate**.
+
+## Build it yourself
 
 ```sh
 git clone https://github.com/einargudnig/posture.git
@@ -185,6 +191,8 @@ Sources/
 Tests/                    11 tests over the state machine
 scripts/
   make-icon.swift         renders the .icns from code
+  make-dmg-background.swift  renders the installer window background
+  make-dmg.sh             app + Applications symlink → laid-out DMG
   release.sh              sign → notarize → staple → publish
 site/                     the landing page (Astro)
 ```

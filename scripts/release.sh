@@ -14,7 +14,7 @@ cd "$(dirname "$0")/.."
 
 PROFILE="${NOTARY_PROFILE:-posture-notary}"
 APP="build/Posture.app"
-ZIP="build/Posture.zip"
+DMG="build/Posture.dmg"
 
 IDENTITY="${SIGN_IDENTITY:-$(security find-identity -v -p codesigning \
   | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')}"
@@ -31,37 +31,40 @@ SIGN_IDENTITY="$IDENTITY" ./build.sh
 echo "▸ Verifying signature"
 codesign --verify --deep --strict --verbose=1 "$APP"
 
-rm -f "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
+./scripts/make-dmg.sh
+
+# The DMG carries the app, so it is what gets signed, notarized and stapled.
+# Stapling to the DMG means Gatekeeper can clear it offline, before the user
+# has copied anything out of it.
+echo "▸ Signing the disk image"
+codesign --force --sign "$IDENTITY" --timestamp "$DMG"
 
 if ! xcrun notarytool history --keychain-profile "$PROFILE" >/dev/null 2>&1; then
   echo
   echo "No notary credentials stored under profile '$PROFILE'." >&2
-  echo "The zip is signed but NOT notarized — on another Mac, Gatekeeper will" >&2
-  echo "refuse to open it. Store credentials (see the header of this script)" >&2
-  echo "and run again before publishing it." >&2
+  echo "The disk image is signed but NOT notarized — on another Mac, Gatekeeper" >&2
+  echo "will refuse to open it. Store credentials (see the header of this" >&2
+  echo "script) and run again before publishing it." >&2
   exit 2
 fi
 
 echo "▸ Notarizing (this takes a few minutes)"
-xcrun notarytool submit "$ZIP" --keychain-profile "$PROFILE" --wait
+xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait
 
 echo "▸ Stapling"
-xcrun stapler staple "$APP"
-
-# Re-zip: the staple lands on the .app, so the zip has to be rebuilt to carry it.
-rm -f "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
+xcrun stapler staple "$DMG"
 
 echo "▸ Gatekeeper check"
-spctl --assess --type execute --verbose=2 "$APP"
+# DMGs are assessed as something you open, not as an executable.
+spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
 
 # Only a stapled build is worth putting on the site.
 mkdir -p site/public
-cp "$ZIP" site/public/Posture.zip
+rm -f site/public/Posture.zip
+/bin/cp -f "$DMG" site/public/Posture.dmg
 # `stat`, not `ls | awk` — ls is commonly aliased to eza, whose columns differ.
-SIZE=$(echo "$(stat -f%z "$ZIP")" | awk '{printf "%.1f", $1/1048576}')
+SIZE=$(echo "$(stat -f%z "$DMG")" | awk '{printf "%.1f", $1/1048576}')
 echo "$SIZE" > site/public/.download-size
 
 echo
-echo "✓ site/public/Posture.zip — ${SIZE} MB, notarized and stapled"
+echo "✓ site/public/Posture.dmg — ${SIZE} MB, notarized and stapled"

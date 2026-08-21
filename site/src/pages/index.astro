@@ -22,9 +22,9 @@ const steps = [
 ];
 
 // The download only appears once `scripts/release.sh` has produced a notarized,
-// stapled build. An un-notarized zip is worse than no download at all: macOS
-// tells the visitor the app is damaged, which reads as a broken app rather than
-// a missing signature.
+// stapled disk image. An un-notarized one is worse than no download at all:
+// macOS tells the visitor the app is damaged, which reads as a broken app
+// rather than a missing signature.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -33,7 +33,7 @@ import { join } from "node:path";
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
 const publicDir = join(process.cwd(), "public");
-const hasDownload = existsSync(join(publicDir, "Posture.zip"));
+const hasDownload = existsSync(join(publicDir, "Posture.dmg"));
 const sizeFile = join(publicDir, ".download-size");
 const downloadSize = existsSync(sizeFile)
   ? readFileSync(sizeFile, "utf8").trim()
@@ -107,7 +107,7 @@ const spec: [string, string][] = [
             {
               hasDownload ? (
                 <>
-                  <a class="button" href="/Posture.zip" download>
+                  <a class="button" href="/Posture.dmg" download>
                     Download for Mac
                   </a>
                   <span class="cta__note">
@@ -287,12 +287,12 @@ const spec: [string, string][] = [
           {
             hasDownload ? (
               <>
-                <a class="button button--lg" href="/Posture.zip" download>
+                <a class="button button--lg" href="/Posture.dmg" download>
                   Download Posture — {downloadSize} MB
                 </a>
                 <p class="install__after">
-                  Signed and notarized, so it opens without a fight. Unzip, drag
-                  it to Applications, then sit up straight and press Calibrate.
+                  Signed and notarized, so it opens without a fight. Drag it to
+                  Applications, then sit up straight and press Calibrate.
                   That's the whole setup.
                 </p>
               </>
