@@ -3,3 +3,5 @@ dist/
 node_modules/
 .vercel/
 .vercel
+public/Posture.zip
+public/.download-size
