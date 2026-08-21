@@ -160,6 +160,36 @@ const spec: [string, string][] = [
         </p>
       </section>
 
+      <section class="shell band notch-band">
+        <div class="argument">
+          <h2>It lives next to the notch.</h2>
+          <div class="prose">
+            <p>
+              Not a menu bar icon. On a notched Mac those overflow into the
+              notch and vanish with no indication they exist at all — which is
+              a strange way for a thing whose whole job is being glanceable to
+              behave.
+            </p>
+            <p>
+              So the reading sits in the empty strip beside the notch, drawn
+              black so it reads as the notch widening. Last minute of head
+              angle, current degrees, green until you're near your limit.{" "}
+              <span class="emph">Click it to open the window.</span>
+            </p>
+          </div>
+        </div>
+        <figure class="notch-figure">
+          <img
+            src="/posture-notch.png"
+            width="680"
+            height="66"
+            alt="A black strip in the menu bar beside the notch, showing a green sparkline and a two degree reading"
+            loading="lazy"
+          />
+          <figcaption>Actual size, on a 14-inch MacBook Pro. Amber past your limit.</figcaption>
+        </figure>
+      </section>
+
       <section class="shell band">
         <div class="section-head">
           <p class="tag">How it works</p>
@@ -397,6 +427,31 @@ const spec: [string, string][] = [
     line-height: 1.6;
     color: var(--ink-muted);
     text-wrap: pretty;
+  }
+
+  .notch-band {
+    display: grid;
+    gap: clamp(1.8rem, 4vw, 3rem);
+  }
+
+  .notch-figure {
+    margin: 0;
+  }
+
+  /* Shown at its real pixel size where there's room, so the strip reads as
+     the small thing it actually is rather than a hero graphic. */
+  .notch-figure img {
+    width: 100%;
+    max-width: 21.25rem;
+    height: auto;
+    border-radius: 6px;
+    display: block;
+  }
+
+  .notch-figure figcaption {
+    margin-top: 0.8rem;
+    font-size: var(--step--2);
+    color: var(--ink-faint);
   }
 
   .section-head {
