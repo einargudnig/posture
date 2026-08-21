@@ -83,9 +83,9 @@ final class PostureModel: ObservableObject {
             NSSound(named: soundName)?.play()
         }
     }
-    @Published var menuBarOnly = Prefs.menuBarOnly {
+    @Published var hideDockIcon = Prefs.hideDockIcon {
         didSet {
-            Prefs.menuBarOnly = menuBarOnly
+            Prefs.hideDockIcon = hideDockIcon
             applyActivationPolicy()
         }
     }
@@ -232,15 +232,15 @@ final class PostureModel: ObservableObject {
     }
 
     private func applyActivationPolicy(activate: Bool = true) {
-        // Menu-bar-only hides the Dock icon. The window still opens on demand;
-        // `.accessory` just stops the app claiming a Dock slot and ⌘-Tab entry.
+        // `.accessory` drops the Dock slot and ⌘-Tab entry. The window still
+        // opens on demand, and the strip beside the notch is unaffected.
         //
         // `NSApplication.shared`, not `NSApp`: this can run before the app has
         // finished starting, and `NSApp` is an implicitly-unwrapped optional
         // that traps when it hasn't been set up yet.
         let app = NSApplication.shared
-        app.setActivationPolicy(menuBarOnly ? .accessory : .regular)
-        if activate && !menuBarOnly { app.activate(ignoringOtherApps: true) }
+        app.setActivationPolicy(hideDockIcon ? .accessory : .regular)
+        if activate && !hideDockIcon { app.activate(ignoringOtherApps: true) }
     }
 
     private func applyLaunchAtLogin() {

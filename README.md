@@ -1,7 +1,7 @@
 # Posture
 
-A small macOS menu bar app that reads the motion sensors in your AirPods and
-tells you when you've been slouching.
+A small macOS app that reads the motion sensors in your AirPods and tells you
+when you've been slouching. The live reading sits beside the notch.
 
 No camera. No account. No network code — `otool -L` shows nothing outside the
 system libraries. The whole app is 776K.
@@ -64,7 +64,7 @@ flowchart TD
     F --> G{"event"}
     G -->|.enteredSlouch / .recovered| H["PostureModel<br/>quantise → diff → publish"]
     G -->|.alert| I["Notification + sound"]
-    H --> J["SwiftUI ring · menu bar icon"]
+    H --> J["SwiftUI ring · notch strip"]
 ```
 
 **Smoothing** uses `alpha = 1 - exp(-dt / 0.8)` rather than a fixed alpha. The
@@ -174,7 +174,9 @@ Sources/
   PostureAnalyzer.swift   pure state machine — no clocks, no I/O, no UI
   HeadphoneMotion.swift   CMHeadphoneMotionManager wrapper
   PostureModel.swift      sensor + analyzer → one diffed @Published snapshot
-  PostureApp.swift        Window + Settings + MenuBarExtra
+  PostureApp.swift        Window + Settings scenes, app delegate
+  NotchHUD.swift          the live strip beside the notch
+  WindowKeeper.swift      hides the window instead of closing it
   ContentView.swift       the one window
   PostureGauge.swift      ring gauge + sparkline
   SettingsView.swift      General / Alerts / Advanced

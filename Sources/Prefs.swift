@@ -18,7 +18,7 @@ enum Prefs {
             Key.sound: true,
             Key.notify: true,
             Key.soundName: "Submarine",
-            Key.menuBarOnly: false,
+            Key.hideDock: false,
             Key.notchHUD: true,
             Key.hasOnboarded: false,
         ])
@@ -37,7 +37,7 @@ enum Prefs {
         static let sound = "playSound"
         static let notify = "showNotifications"
         static let soundName = "alertSoundName"
-        static let menuBarOnly = "menuBarOnly"
+        static let hideDock = "hideDockIcon"
         static let notchHUD = "showNotchHUD"
         static let hasOnboarded = "hasOnboarded"
     }
@@ -95,9 +95,9 @@ enum Prefs {
         set { store.set(newValue, forKey: Key.soundName) }
     }
 
-    static var menuBarOnly: Bool {
-        get { store.bool(forKey: Key.menuBarOnly) }
-        set { store.set(newValue, forKey: Key.menuBarOnly) }
+    static var hideDockIcon: Bool {
+        get { store.bool(forKey: Key.hideDock) }
+        set { store.set(newValue, forKey: Key.hideDock) }
     }
 
     static var showNotchHUD: Bool {

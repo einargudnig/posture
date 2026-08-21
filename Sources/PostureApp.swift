@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Without a MenuBarExtra, SwiftUI terminates the app once the last window
-/// closes — and the notch panel doesn't count as a window. Posture is meant to
-/// keep monitoring with no window open, so that has to be turned off.
+/// SwiftUI terminates a Window-scene app once the last window closes, and the
+/// notch panel doesn't count as a window. Posture keeps monitoring with no
+/// window open, so that has to be turned off.
 final class PostureAppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
@@ -54,7 +54,5 @@ struct PostureApp: App {
                 .environmentObject(model)
         }
 
-        // No MenuBarExtra: the reading lives beside the notch instead. A status
-        // item competes for menu bar space and loses silently when it overflows.
     }
 }

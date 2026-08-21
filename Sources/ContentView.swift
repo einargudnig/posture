@@ -45,12 +45,12 @@ struct ContentView: View {
         .onAppear {
             model.chartIsVisible = true
             WindowKeeper.shared.install()
-            // Menu-bar-only means exactly that: don't throw a window up at
-            // login. Opening it from the menu still works, and this only fires
-            // for the window SwiftUI restores at launch.
+            // Running without a Dock icon means running unobtrusively, so don't
+            // throw a window up at login. This only fires for the window
+            // SwiftUI restores at launch; the notch strip reopens it on demand.
             if !handledLaunch {
                 handledLaunch = true
-                if model.menuBarOnly { dismissWindow(id: "main") }
+                if model.hideDockIcon { dismissWindow(id: "main") }
             }
         }
         .onDisappear { model.chartIsVisible = false }

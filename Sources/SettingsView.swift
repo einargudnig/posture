@@ -77,7 +77,7 @@ private struct GeneralSettings: View {
             Section {
                 Toggle("Show beside the notch", isOn: $model.showNotchHUD)
                 Toggle("Launch at login", isOn: $model.launchAtLogin)
-                Toggle("Menu bar only (hide Dock icon)", isOn: $model.menuBarOnly)
+                Toggle("Hide Dock icon", isOn: $model.hideDockIcon)
             } header: {
                 Text("Startup")
             } footer: {
@@ -120,7 +120,7 @@ private struct AlertSettings: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
                 } else if !model.showNotifications && !model.playSound {
-                    Text("With both off, only the menu bar icon changes.")
+                    Text("With both off, only the strip beside the notch changes.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
