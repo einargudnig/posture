@@ -1,0 +1,539 @@
+---
+import "../styles/global.css";
+import AngleDiagram from "../components/AngleDiagram.astro";
+import BackoffDiagram from "../components/BackoffDiagram.astro";
+
+const steps = [
+  {
+    n: "01",
+    title: "Sit the way you want to sit",
+    body: "Calibration samples three seconds of head pitch and takes the median, so one glance sideways doesn't skew your baseline. You do this once.",
+  },
+  {
+    n: "02",
+    title: "Forget it's there",
+    body: "It reads about 25 samples a second from the accelerometer already in your AirPods, and smooths them. Brief looks down at the keyboard never count — a slouch has to hold for 25 seconds before it registers.",
+  },
+  {
+    n: "03",
+    title: "Get nudged, eventually",
+    body: "A notification, a sound, or just the menu bar icon changing colour. Sitting up clears it and resets the pacing.",
+  },
+];
+
+// The download only appears once `scripts/release.sh` has produced a notarized,
+// stapled build. An un-notarized zip is worse than no download at all: macOS
+// tells the visitor the app is damaged, which reads as a broken app rather than
+// a missing signature.
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// Resolved against the project root rather than `import.meta.url`: Astro
+// rewrites module URLs during the build, so they don't point at the source.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+
+const publicDir = join(process.cwd(), "public");
+const hasDownload = existsSync(join(publicDir, "Posture.zip"));
+const sizeFile = join(publicDir, ".download-size");
+const downloadSize = existsSync(sizeFile)
+  ? readFileSync(sizeFile, "utf8").trim()
+  : null;
+
+const spec: [string, string][] = [
+  ["Hardware", "AirPods Pro, AirPods 3rd gen or later, AirPods Max, Beats Fit Pro"],
+  ["System", "macOS 14 or later, Apple Silicon"],
+  ["Measures", "Head pitch, gravity-referenced — no camera, ever"],
+  ["Network", "None. There is no networking code in it"],
+  ["Price", "Free. It was a weekend project"],
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Posture — a protractor for your neck</title>
+    <meta
+      name="description"
+      content="A small macOS menu bar app that reads the motion sensors in your AirPods and tells you when you have been slouching. Free, local, and it gets quieter when you ignore it."
+    />
+    <meta name="theme-color" content="#f8f5ef" />
+    {/* Two hosts serve this page. Both point search engines at the same
+        canonical URL so they aren't treated as duplicates — change `site` in
+        astro.config.mjs when the primary host changes. */}
+    <link rel="canonical" href={canonical} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content="Posture — a protractor for your neck" />
+    <meta
+      property="og:description"
+      content="Reads head angle from your AirPods and nudges you when you slouch. Every nudge you ignore doubles the wait before the next one."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..600;1,400&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23169963'/%3E%3Ccircle cx='16' cy='9.4' r='2.5' fill='%23fff'/%3E%3Cpath d='M12.2 13.4h7.6v6.4h-2v5.6h-1.8v-5.6h-.2v5.6h-1.8v-5.6h-1.8z' fill='%23fff'/%3E%3C/svg%3E"
+    />
+  </head>
+
+  <body>
+    <header class="shell masthead">
+      <span class="wordmark">Posture</span>
+      <span class="tag">for macOS</span>
+    </header>
+
+    <main>
+      <section class="shell hero">
+        <div class="hero__text">
+          <p class="tag rise" style="animation-delay:0s">
+            AirPods motion · no camera
+          </p>
+          <h1 class="rise" style="animation-delay:0.08s">
+            A protractor<br />for your neck.
+          </h1>
+          <p class="lede rise" style="animation-delay:0.16s">
+            Your AirPods already contain an accelerometer. This reads the angle
+            of your head off it, and tells you when you've spent too long
+            pointed at your keyboard.
+          </p>
+          <div class="cta rise" style="animation-delay:0.24s">
+            {
+              hasDownload ? (
+                <>
+                  <a class="button" href="/Posture.zip" download>
+                    Download for Mac
+                  </a>
+                  <span class="cta__note">
+                    Free · {downloadSize} MB · macOS 14+ · Apple Silicon
+                  </span>
+                </>
+              ) : (
+                <>
+                  <a class="button" href="#install">
+                    Build it yourself
+                  </a>
+                  <span class="cta__note">Free · nothing leaves your Mac</span>
+                </>
+              )
+            }
+          </div>
+        </div>
+        <div class="hero__figure">
+          <AngleDiagram />
+        </div>
+      </section>
+
+      <section class="shell band">
+        <p class="tag">The actual problem</p>
+        <div class="argument">
+          <h2>Detecting a slouch is the easy part.</h2>
+          <div class="prose">
+            <p>
+              Several apps already do it, and they all work the same way: notice
+              you've hunched, tell you about it, repeat forever at a fixed
+              interval. They also all end the same way — you mute them in week
+              two, because being interrupted every two minutes while you're
+              concentrating is worse than the slouch was.
+            </p>
+            <p class="emph">
+              So this one gets quieter the longer you ignore it.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell band band--tight figure-band">
+        <BackoffDiagram />
+        <p class="figure-caption">
+          Every nudge you ignore <span class="mark">doubles</span> the wait before
+          the next one, up to a limit you set. Sitting up once drops it straight
+          back to the first interval — so full strength is always one good
+          posture away, and never something you have to remember to switch back
+          on.
+        </p>
+      </section>
+
+      <section class="shell band">
+        <div class="section-head">
+          <p class="tag">How it works</p>
+          <a class="more" href="/how-it-works">The long version →</a>
+        </div>
+        <ol class="steps">
+          {
+            steps.map((step) => (
+              <li class="step">
+                <span class="step__n">{step.n}</span>
+                <div>
+                  <h3>{step.title}</h3>
+                  <p class="prose">{step.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section class="shell band shot-band">
+        <div class="shot-band__text">
+          <p class="tag">The whole app</p>
+          <h2>One window, three numbers.</h2>
+          <p class="prose">
+            The ring fills as you approach your limit. Underneath it: how much
+            of this session you've spent upright, how long you've been at it,
+            and how many nudges you've ignored. Everything else lives in
+            Settings, and most days you won't open it.
+          </p>
+        </div>
+        <img
+          class="shot"
+          src="/posture-app.png"
+          width="680"
+          height="868"
+          alt="The Posture app window, showing a status ring and a Calibrate button"
+          loading="lazy"
+        />
+      </section>
+
+      <section class="shell band" id="install">
+        <p class="tag">Honestly</p>
+        <div class="argument">
+          <h2>It measures your head, not your spine.</h2>
+          <div class="prose">
+            <p>
+              Head pitch catches the screen-slump well, because that is what
+              hunching does to your neck. It cannot tell leaning back in a
+              well-aligned chair from sitting bolt upright, and it will read a
+              long look down at a notebook as a slouch until the grace period
+              filters it out. It's a nudge, not a measurement of your health.
+            </p>
+          </div>
+        </div>
+
+        <dl class="spec">
+          {
+            spec.map(([term, value]) => (
+              <div class="spec__row">
+                <dt>{term}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+
+        <div class="install">
+          {
+            hasDownload ? (
+              <>
+                <a class="button button--lg" href="/Posture.zip" download>
+                  Download Posture — {downloadSize} MB
+                </a>
+                <p class="install__after">
+                  Signed and notarized, so it opens without a fight. Unzip, drag
+                  it to Applications, then sit up straight and press Calibrate.
+                  That's the whole setup.
+                </p>
+              </>
+            ) : (
+              <>
+                <p class="prose install__note">
+                  Build it yourself — it takes about ten seconds:
+                </p>
+                <pre><code>git clone https://github.com/einargudnig/posture.git{"\n"}cd posture{"\n"}./build.sh &amp;&amp; open build/Posture.app</code></pre>
+                <p class="install__after">
+                  Then sit up straight and press Calibrate. That's the whole
+                  setup.
+                </p>
+              </>
+            )
+          }
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell foot">
+      <p>Built in Reykjavík, for fun.</p>
+      <p class="foot__meta">
+        <a href="https://github.com/einargudnig/posture">Source on GitHub</a> ·
+        <a href="/how-it-works">How it works</a>
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    padding-block: 1.6rem;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    letter-spacing: -0.01em;
+  }
+
+  /* Hero: asymmetric and text-weighted; the figure runs to the edge. */
+  .hero {
+    display: grid;
+    gap: clamp(2.5rem, 1rem + 6vw, 5rem);
+    padding-block: clamp(2rem, 1rem + 5vw, 5rem) clamp(3rem, 1rem + 7vw, 7rem);
+  }
+
+  @media (min-width: 60rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      align-items: center;
+    }
+  }
+
+  h1 {
+    font-size: var(--step-4);
+    margin-block: 0.3em 0.5em;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem 1.4rem;
+    margin-top: 2.2rem;
+  }
+
+  .button {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration: none;
+    font-size: var(--step--1);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.85em 1.6em;
+    border-radius: 999px;
+    transition:
+      transform 0.4s var(--ease),
+      background-color 0.4s var(--ease);
+  }
+
+  .button:hover {
+    background: var(--signal);
+    transform: translateY(-2px);
+  }
+
+  .button--lg {
+    font-size: var(--step-0);
+    padding: 1em 2em;
+  }
+
+  .cta__note {
+    font-size: var(--step--1);
+    color: var(--ink-faint);
+  }
+
+  /* Argument sections: heading in the narrow column, body in the wide one. */
+  .argument {
+    display: grid;
+    gap: 1.4rem clamp(2rem, 6vw, 5rem);
+    margin-top: 1.6rem;
+  }
+
+  @media (min-width: 54rem) {
+    .argument {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      align-items: start;
+    }
+  }
+
+  .argument h2 {
+    font-size: var(--step-3);
+  }
+
+  .figure-band {
+    display: grid;
+    gap: clamp(1.8rem, 4vw, 3.5rem);
+  }
+
+  @media (min-width: 62rem) {
+    .figure-band {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+
+  .figure-caption {
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--ink-muted);
+    text-wrap: pretty;
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+
+  .more {
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule-strong);
+    padding-bottom: 1px;
+    transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+  }
+
+  .more:hover {
+    color: var(--signal);
+    border-color: var(--signal);
+  }
+
+  /* Steps: a numbered list separated by rules, not a grid of cards. */
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin-top: 2.5rem;
+  }
+
+  .step {
+    display: grid;
+    gap: 0.6rem 2rem;
+    padding-block: clamp(1.5rem, 3vw, 2.4rem);
+    border-top: 1px solid var(--rule);
+  }
+
+  .step:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .step {
+      grid-template-columns: 4rem minmax(0, 1fr);
+    }
+  }
+
+  .step__n {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    color: var(--signal);
+    line-height: 1;
+  }
+
+  .step h3 {
+    font-size: var(--step-2);
+    margin-bottom: 0.45rem;
+  }
+
+  .shot-band {
+    display: grid;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  @media (min-width: 58rem) {
+    .shot-band {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+    }
+  }
+
+  .shot-band h2 {
+    font-size: var(--step-3);
+    margin-block: 1rem 1.1rem;
+  }
+
+  .shot {
+    width: 100%;
+    max-width: 20rem;
+    height: auto;
+    border-radius: 14px;
+    justify-self: center;
+    box-shadow:
+      0 1px 1px oklch(0.2 0.02 60 / 0.06),
+      0 18px 40px -18px oklch(0.2 0.02 60 / 0.4);
+  }
+
+  /* Spec sheet: hairline rules, terms set in the margin. */
+  .spec {
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  }
+
+  .spec__row {
+    display: grid;
+    gap: 0.15rem 2rem;
+    padding-block: 0.9rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--step--1);
+  }
+
+  @media (min-width: 44rem) {
+    .spec__row {
+      grid-template-columns: 9rem minmax(0, 1fr);
+    }
+  }
+
+  .spec dt {
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: var(--step--2);
+    padding-top: 0.2em;
+  }
+
+  .spec dd {
+    margin: 0;
+  }
+
+  .install {
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .install__note {
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+  }
+
+  pre {
+    margin: 1.2rem 0 1rem;
+    padding: 1.3rem 1.5rem;
+    background: var(--paper-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: var(--step--1);
+    line-height: 1.75;
+  }
+
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .install__after {
+    font-size: var(--step--1);
+    color: var(--ink-faint);
+  }
+
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    padding-block: 3rem 4rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+  }
+
+  .foot__meta {
+    color: var(--ink-faint);
+  }
+</style>

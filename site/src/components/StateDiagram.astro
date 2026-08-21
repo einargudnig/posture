@@ -1,0 +1,118 @@
+---
+// The actual state machine, with the real thresholds on the transitions.
+// Two states and the guard conditions between them — that is the whole of it.
+---
+
+<figure class="states">
+  <svg viewBox="0 0 660 210" role="img" aria-labelledby="states-title">
+    <title id="states-title">
+      State machine: good becomes slouching past 12 degrees, returns to good
+      below 7 degrees, and alerts after 25 seconds of sustained slouching
+    </title>
+
+    <!-- good -->
+    <rect class="box" x="20" y="24" width="150" height="52" rx="26"></rect>
+    <text class="state" x="95" y="56" text-anchor="middle">good</text>
+
+    <!-- slouching -->
+    <rect class="box box--warn" x="400" y="24" width="150" height="52" rx="26"
+    ></rect>
+    <text class="state state--warn" x="475" y="56" text-anchor="middle"
+      >slouching</text
+    >
+
+    <!-- good → slouching -->
+    <path class="edge" d="M 176 40 L 394 40"></path>
+    <polygon class="head" points="394,40 384,35 384,45"></polygon>
+    <text class="cond" x="285" y="28" text-anchor="middle">drop &gt; 12°</text>
+
+    <!-- slouching → good -->
+    <path class="edge" d="M 394 62 L 176 62"></path>
+    <polygon class="head" points="176,62 186,57 186,67"></polygon>
+    <text class="cond" x="285" y="82" text-anchor="middle">drop &lt; 7°</text>
+    <text class="note" x="285" y="99" text-anchor="middle"
+      >resets the back-off</text
+    >
+
+    <!-- slouching → alert -->
+    <path class="edge edge--warn" d="M 475 82 L 475 138"></path>
+    <polygon class="head head--warn" points="475,138 470,128 480,128"></polygon>
+    <text class="cond" x="490" y="114">held ≥ 25s</text>
+
+    <rect class="box box--alert" x="400" y="140" width="150" height="48" rx="10"
+    ></rect>
+    <text class="state state--alert" x="475" y="170" text-anchor="middle"
+      >nudge</text
+    >
+  </svg>
+</figure>
+
+<style>
+  .states {
+    margin: clamp(2rem, 4vw, 3rem) 0 0;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    max-width: 40rem;
+  }
+
+  .box {
+    fill: none;
+    stroke: var(--rule-strong);
+    stroke-width: 1.5;
+  }
+
+  .box--warn {
+    stroke: var(--warn);
+  }
+
+  .box--alert {
+    fill: var(--warn);
+    fill-opacity: 0.1;
+    stroke: var(--warn);
+    stroke-dasharray: 5 4;
+  }
+
+  .state {
+    font-family: var(--font-display);
+    font-size: 22px;
+    fill: var(--ink);
+  }
+
+  .state--warn,
+  .state--alert {
+    fill: var(--warn);
+  }
+
+  .edge {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+  }
+
+  .edge--warn {
+    stroke: var(--warn);
+  }
+
+  .head {
+    fill: var(--ink-faint);
+  }
+
+  .head--warn {
+    fill: var(--warn);
+  }
+
+  .cond {
+    font-family: var(--font-body);
+    font-size: 13px;
+    fill: var(--ink-muted);
+  }
+
+  .note {
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    fill: var(--ink-faint);
+  }
+</style>

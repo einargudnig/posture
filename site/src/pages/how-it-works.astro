@@ -1,0 +1,357 @@
+---
+import "../styles/global.css";
+import BackoffDiagram from "../components/BackoffDiagram.astro";
+import StateDiagram from "../components/StateDiagram.astro";
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+
+const stages = [
+  {
+    n: "01",
+    title: "Read one angle, not six",
+    body: "Motion-capable AirPods carry a 6-axis IMU that Apple ships for spatial audio. Pitch and roll are fused against gravity, so they're absolute and never drift. Yaw is integrated from the gyroscope alone and wanders continuously. Posture uses pitch and nothing else — that's what makes “how far is my head tilted down” mean the same thing an hour later.",
+  },
+  {
+    n: "02",
+    title: "Smooth it, frame-rate independently",
+    body: "About 25 samples a second arrive, and the rate wobbles. The filter uses α = 1 − exp(−dt/τ) rather than a fixed α, so its 0.8-second time constant stays put even when the sample rate doesn't. A single 40-millisecond spike — a sneeze, a laugh — never reaches the state machine.",
+  },
+  {
+    n: "03",
+    title: "Measure against a baseline you set",
+    body: "Calibration samples three seconds and keeps the median, not the mean, so one head-turn mid-calibration barely moves it. Everything after that is measured relative to your posture, not to some idea of correct posture.",
+  },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>How Posture works</title>
+    <meta
+      name="description"
+      content="How Posture turns the accelerometer in your AirPods into a nudge: gravity-referenced head pitch, a smoothing filter, a hysteresis state machine, and nagging that backs off exponentially."
+    />
+    <meta name="theme-color" content="#f8f5ef" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content="How Posture works" />
+    <meta property="og:type" content="article" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..600;1,400&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23169963'/%3E%3Ccircle cx='16' cy='9.4' r='2.5' fill='%23fff'/%3E%3Cpath d='M12.2 13.4h7.6v6.4h-2v5.6h-1.8v-5.6h-.2v5.6h-1.8v-5.6h-1.8z' fill='%23fff'/%3E%3C/svg%3E"
+    />
+  </head>
+
+  <body>
+    <header class="shell masthead">
+      <a class="wordmark" href="/">Posture</a>
+      <span class="tag">how it works</span>
+    </header>
+
+    <main>
+      <section class="shell intro">
+        <h1>Your AirPods already<br />know the angle.</h1>
+        <p class="lede">
+          Nothing here is clever. The sensor has been in your ears the whole
+          time; the only interesting decisions are what to measure, what to
+          ignore, and when to say something.
+        </p>
+      </section>
+
+      <section class="shell band">
+        <p class="tag">Signal</p>
+        <ol class="steps">
+          {
+            stages.map((stage) => (
+              <li class="step">
+                <span class="step__n">{stage.n}</span>
+                <div>
+                  <h2>{stage.title}</h2>
+                  <p class="prose">{stage.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section class="shell band">
+        <p class="tag">Decision</p>
+        <div class="argument">
+          <h2>Two guards, doing different jobs.</h2>
+          <div class="prose">
+            <p>
+              A slouch has to clear <span class="emph">12° below baseline</span>{" "}
+              to register, and then <span class="emph">hold for 25 seconds</span>{" "}
+              before it's worth interrupting for. Coming back only counts once
+              you're 5° inside the limit.
+            </p>
+            <p>
+              That last number is hysteresis, and it solves a different problem
+              from the grace period. Hysteresis stops the state flickering while
+              you hover exactly at the limit. The grace period stops a
+              deliberate look down at your keyboard counting at all. Drop
+              either one and it becomes unusable in a different way.
+            </p>
+          </div>
+        </div>
+        <StateDiagram />
+      </section>
+
+      <section class="shell band">
+        <p class="tag">Nagging</p>
+        <div class="argument">
+          <h2>It gets quieter the longer you ignore it.</h2>
+          <div class="prose">
+            <p>
+              Every other app in this category alerts forever at a fixed
+              interval. None of them model what happens when you ignore the
+              alert, which is exactly why they end up muted.
+            </p>
+            <p>
+              Ignoring a nudge usually means you're deep in something. So each
+              one you ignore doubles the wait before the next, up to a ceiling
+              you set. <span class="emph">Sitting up resets it completely</span> —
+              which makes good posture the only thing that restores full
+              strength, rather than a timer quietly expiring.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell band band--tight figure-band">
+        <BackoffDiagram />
+        <p class="figure-caption">
+          Drawn to scale on a linear time axis, so the doubling is the shape of
+          the figure rather than a claim underneath it. The cost is real: on a
+          bad day it fades to a nudge every half hour and mostly lets you get on
+          with it.
+        </p>
+      </section>
+
+      <section class="shell band">
+        <p class="tag">Cost</p>
+        <div class="argument">
+          <h2>0.13% of one CPU.</h2>
+          <div class="prose">
+            <p>
+              The analyzer runs at the full sample rate, but the interface is
+              only told about changes it would actually render — degrees rounded
+              to a half, the clock to a second, the percentage to a percent. A
+              still head produces an identical snapshot and therefore no work at
+              all. Pausing tears the sensor down rather than quietly ignoring
+              its output, because a subscribed app keeps both the AirPods and
+              the Bluetooth link awake.
+            </p>
+          </div>
+        </div>
+
+        <dl class="spec">
+          <div class="spec__row">
+            <dt>CPU idle</dt>
+            <dd>0.13% — window open or closed</dd>
+          </div>
+          <div class="spec__row">
+            <dt>Memory</dt>
+            <dd>85 MB resident</dd>
+          </div>
+          <div class="spec__row">
+            <dt>App size</dt>
+            <dd>776 KB, 352 KB zipped</dd>
+          </div>
+          <div class="spec__row">
+            <dt>Dependencies</dt>
+            <dd>None. Nothing linked outside the system libraries</dd>
+          </div>
+          <div class="spec__row">
+            <dt>Network</dt>
+            <dd>No networking code exists in the app</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="shell band">
+        <p class="tag">Honestly</p>
+        <div class="argument">
+          <h2>It measures your head, not your spine.</h2>
+          <div class="prose">
+            <p>
+              Head pitch tracks the screen-slump well, because that's what
+              hunching does to your neck. It cannot tell leaning back in a
+              well-aligned chair from sitting bolt upright, and a long look down
+              at a notebook reads as a slouch until the grace period filters it
+              out. It's a nudge, not a measurement of your health.
+            </p>
+          </div>
+        </div>
+        <p class="back">
+          <a href="/">← Back to Posture</a>
+        </p>
+      </section>
+    </main>
+
+    <footer class="shell foot">
+      <p>Built in Reykjavík, for fun.</p>
+      <p class="foot__meta">
+        <a href="https://github.com/einargudnig/posture">Source on GitHub</a>
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    padding-block: 1.6rem;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+
+  .intro {
+    padding-block: clamp(2rem, 1rem + 5vw, 5rem) clamp(2.5rem, 1rem + 5vw, 5rem);
+  }
+
+  h1 {
+    font-size: var(--step-4);
+    margin-bottom: 0.4em;
+  }
+
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin-top: 2.5rem;
+  }
+
+  .step {
+    display: grid;
+    gap: 0.6rem 2rem;
+    padding-block: clamp(1.5rem, 3vw, 2.4rem);
+    border-top: 1px solid var(--rule);
+  }
+
+  .step:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .step {
+      grid-template-columns: 4rem minmax(0, 1fr);
+    }
+  }
+
+  .step__n {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    color: var(--signal);
+    line-height: 1;
+  }
+
+  .step h2 {
+    font-size: var(--step-2);
+    margin-bottom: 0.45rem;
+  }
+
+  .argument {
+    display: grid;
+    gap: 1.4rem clamp(2rem, 6vw, 5rem);
+    margin-top: 1.6rem;
+  }
+
+  @media (min-width: 54rem) {
+    .argument {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      align-items: start;
+    }
+  }
+
+  .argument h2 {
+    font-size: var(--step-3);
+  }
+
+  .figure-band {
+    display: grid;
+    gap: clamp(1.8rem, 4vw, 3.5rem);
+  }
+
+  @media (min-width: 62rem) {
+    .figure-band {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+
+  .figure-caption {
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--ink-muted);
+    text-wrap: pretty;
+  }
+
+  .spec {
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  }
+
+  .spec__row {
+    display: grid;
+    gap: 0.15rem 2rem;
+    padding-block: 0.9rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--step--1);
+  }
+
+  @media (min-width: 44rem) {
+    .spec__row {
+      grid-template-columns: 9rem minmax(0, 1fr);
+    }
+  }
+
+  .spec dt {
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: var(--step--2);
+    padding-top: 0.2em;
+  }
+
+  .spec dd {
+    margin: 0;
+  }
+
+  .back {
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    font-size: var(--step--1);
+  }
+
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    padding-block: 3rem 4rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+  }
+
+  .foot__meta {
+    color: var(--ink-faint);
+  }
+</style>

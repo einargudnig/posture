@@ -1,0 +1,117 @@
+---
+// Real data, not decoration: the actual nudge schedule at default settings.
+// Gap widths are drawn to scale on a linear time axis, so the doubling is the
+// shape of the figure rather than a claim in the caption.
+const ticks = [0, 2, 6, 14, 30, 60];
+const gaps = ["2 min", "4 min", "8 min", "16 min", "30 min — capped"];
+const x = (minutes: number) => 30 + (minutes / 60) * 590;
+---
+
+<figure class="backoff">
+  <svg viewBox="0 0 660 150" role="img" aria-labelledby="backoff-title">
+    <title id="backoff-title">
+      Nudge timeline: gaps of 2, 4, 8, 16 and 30 minutes, each twice the last
+      until the cap
+    </title>
+
+    <line class="axis" x1="30" y1="76" x2="640" y2="76"></line>
+
+    {
+      gaps.map((label, index) => {
+        const from = x(ticks[index]);
+        const to = x(ticks[index + 1]);
+        const mid = (from + to) / 2;
+        // The early gaps are only a few pixels apart, so labels alternate
+        // between two rows instead of colliding on one.
+        const row = index % 2 === 0 ? 116 : 137;
+        return (
+          <g>
+            <line class="span" x1={from} y1="96" x2={to} y2="96" />
+            <line class="leader" x1={mid} y1="96" x2={mid} y2={row - 11} />
+            <text class="gap" x={mid} y={row} text-anchor="middle">
+              {label}
+            </text>
+          </g>
+        );
+      })
+    }
+
+    {
+      ticks.map((minutes, index) => (
+        <g class="tick" style={`--i:${index}`}>
+          <line x1={x(minutes)} y1="76" x2={x(minutes)} y2="50" />
+          <circle cx={x(minutes)} cy="46" r="4.5" />
+        </g>
+      ))
+    }
+
+    <text class="note" x="30" y="24">nudge</text>
+    <text class="note note--end" x="640" y="24" text-anchor="end">
+      still slouching
+    </text>
+  </svg>
+</figure>
+
+<style>
+  .backoff {
+    margin: 0;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .axis {
+    stroke: var(--rule-strong);
+    stroke-width: 1.5;
+  }
+
+  .tick line {
+    stroke: var(--rule-strong);
+    stroke-width: 1.5;
+  }
+
+  .tick circle {
+    fill: var(--warn);
+  }
+
+  .span {
+    stroke: var(--ink-faint);
+    stroke-width: 1;
+  }
+
+  .leader {
+    stroke: var(--rule-strong);
+    stroke-width: 1;
+  }
+
+  .gap,
+  .note {
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    fill: var(--ink-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .note {
+    fill: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tick {
+      animation: pop 0.7s var(--ease) calc(0.3s + var(--i) * 0.13s) backwards;
+    }
+  }
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+  }
+</style>

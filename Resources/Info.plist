@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Posture</string>
+	<key>CFBundleDisplayName</key>
+	<string>Posture</string>
+	<key>CFBundleIdentifier</key>
+	<string>is.einargudni.posture</string>
+	<key>CFBundleExecutable</key>
+	<string>Posture</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleIconFile</key>
+	<string>Posture</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Posture reads AirPods head orientation locally. No data leaves your Mac.</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Posture reads head orientation from your AirPods to tell when you are slouching.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Posture talks to your AirPods over Bluetooth to read their motion sensors.</string>
+</dict>
+</plist>

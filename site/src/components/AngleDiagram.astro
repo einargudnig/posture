@@ -1,0 +1,152 @@
+---
+// The hero figure: head-forward angle measured against a calibrated baseline,
+// with everything past the limit shaded. Geometry rather than illustration —
+// the app measures an angle, so the page shows one.
+//
+// 26° against a 12° limit is a realistic desk slouch, and far enough past the
+// limit to read at a glance. Drawing the real 14° would be honest and
+// illegible.
+---
+
+<figure class="angle">
+  <svg viewBox="0 0 470 240" role="img" aria-labelledby="angle-title">
+    <title id="angle-title">
+      Head angle at 26 degrees below a calibrated baseline, well past the 12
+      degree limit
+    </title>
+
+    <!-- everything past the limit -->
+    <path class="zone" d="M 60 60 L 382.8 128.6 A 330 330 0 0 1 356.6 204.7 Z"
+    ></path>
+
+    <!-- 0° reference -->
+    <line class="ref" x1="60" y1="60" x2="400" y2="60"></line>
+    <text class="axis-label" x="400" y="51" text-anchor="end">baseline 0°</text>
+
+    <!-- the configured limit -->
+    <line class="limit" x1="60" y1="60" x2="382.8" y2="128.6"></line>
+    <text class="axis-label" x="390" y="132">12° limit</text>
+
+    <!-- swept angle -->
+    <path class="sweep" d="M 150 60 A 90 90 0 0 1 140.9 99.5"></path>
+    <text class="reading" x="160" y="104">26°</text>
+
+    <!-- the measured head vector -->
+    <g class="arm">
+      <line x1="60" y1="60" x2="356.6" y2="204.7"></line>
+      <circle cx="356.6" cy="204.7" r="10"></circle>
+    </g>
+    <text class="axis-label head-label" x="372" y="209">your head</text>
+
+    <circle class="pivot" cx="60" cy="60" r="4.5"></circle>
+  </svg>
+</figure>
+
+<style>
+  .angle {
+    margin: 0;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .zone {
+    fill: var(--warn);
+    opacity: 0.1;
+  }
+
+  .ref {
+    stroke: var(--rule-strong);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 5;
+    stroke-linecap: round;
+  }
+
+  .limit {
+    stroke: var(--ink-faint);
+    stroke-width: 1.5;
+    stroke-dasharray: 7 5;
+  }
+
+  .arm line {
+    stroke: var(--warn);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  .arm circle {
+    fill: var(--warn);
+  }
+
+  .pivot {
+    fill: var(--ink);
+  }
+
+  .sweep {
+    fill: none;
+    stroke: var(--warn);
+    stroke-width: 2;
+    opacity: 0.6;
+  }
+
+  .axis-label {
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    fill: var(--ink-faint);
+  }
+
+  .head-label {
+    fill: var(--warn);
+  }
+
+  /* Numerals use the sans, not the display serif: Instrument Serif's angled
+     stress reads as italic on digits, which is wrong for a measurement. */
+  .reading {
+    font-family: var(--font-body);
+    font-size: 27px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    fill: var(--warn);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .arm {
+      transform-origin: 60px 60px;
+      animation: droop 2.4s var(--ease) 0.4s backwards;
+    }
+
+    .sweep {
+      stroke-dasharray: 60;
+      animation: sweep 2.4s var(--ease) 0.4s backwards;
+    }
+
+    .zone,
+    .reading,
+    .head-label {
+      animation: fade 1.4s var(--ease) 1.4s backwards;
+    }
+  }
+
+  @keyframes droop {
+    from {
+      transform: rotate(-26deg);
+    }
+  }
+
+  @keyframes sweep {
+    from {
+      stroke-dashoffset: 60;
+    }
+  }
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+</style>

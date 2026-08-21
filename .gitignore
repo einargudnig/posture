@@ -1,0 +1,7 @@
+.build/
+build/
+.swiftpm/
+.playwright-mcp/
+.DS_Store
+*.png
+!site/public/*.png
