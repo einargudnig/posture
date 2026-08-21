@@ -44,6 +44,7 @@ struct ContentView: View {
         .background(.background)
         .onAppear {
             model.chartIsVisible = true
+            WindowKeeper.shared.install()
             // Menu-bar-only means exactly that: don't throw a window up at
             // login. Opening it from the menu still works, and this only fires
             // for the window SwiftUI restores at launch.

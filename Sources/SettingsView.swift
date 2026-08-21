@@ -75,6 +75,7 @@ private struct GeneralSettings: View {
             }
 
             Section {
+                Toggle("Show beside the notch", isOn: $model.showNotchHUD)
                 Toggle("Launch at login", isOn: $model.launchAtLogin)
                 Toggle("Menu bar only (hide Dock icon)", isOn: $model.menuBarOnly)
             } header: {

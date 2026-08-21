@@ -89,6 +89,12 @@ final class PostureModel: ObservableObject {
             applyActivationPolicy()
         }
     }
+    @Published var showNotchHUD = Prefs.showNotchHUD {
+        didSet {
+            Prefs.showNotchHUD = showNotchHUD
+            applyNotchHUD()
+        }
+    }
     @Published var maxCooldownSeconds = Prefs.maxCooldownSeconds {
         didSet {
             Prefs.maxCooldownSeconds = maxCooldownSeconds
@@ -133,6 +139,7 @@ final class PostureModel: ObservableObject {
     private var calibrationDeadline: Date?
     private var uiTimer: Timer?
     private var isSyncingLoginItem = false
+    private var notchHUD: NotchHUD?
     private var currentStatus: MotionStatus = .waiting
     private var historyTick = 0
 
@@ -169,6 +176,7 @@ final class PostureModel: ObservableObject {
         if showNotifications { requestNotificationAccess() }
         // Don't steal focus during launch — SwiftUI is about to show the window.
         applyActivationPolicy(activate: false)
+        applyNotchHUD()
         publish()
     }
 
@@ -198,6 +206,28 @@ final class PostureModel: ObservableObject {
             let denied = settings.authorizationStatus == .denied
             Task { @MainActor in self.notificationsDenied = denied }
         }
+    }
+
+    private func applyNotchHUD() {
+        if notchHUD == nil { notchHUD = NotchHUD(model: self) }
+        showNotchHUD ? notchHUD?.show() : notchHUD?.hide()
+    }
+
+    /// Brings the window back. The strip beside the notch took over the job the
+    /// status item menu used to do, and this is the only part of it that
+    /// mattered.
+    func showMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        // WindowKeeper hides the window rather than letting it close, so there
+        // is normally one to order front. The reopen event is only a fallback
+        // for the case where it genuinely went away.
+        if let window = WindowKeeper.mainWindow {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config)
     }
 
     private func applyActivationPolicy(activate: Bool = true) {
@@ -341,9 +371,9 @@ final class PostureModel: ObservableObject {
             ? (analyzer.slouchSeconds / analyzer.totalSeconds * 200).rounded() / 200
             : nil
 
-        // The sparkline only exists while a window is on screen, so there is no
-        // reason to accumulate points — or redraw — when it isn't.
-        if chartIsVisible, let drop = analyzer.dropDegrees {
+        // Points are only worth accumulating while something is drawing them —
+        // the window's chart, or the strip beside the notch.
+        if chartIsVisible || showNotchHUD, let drop = analyzer.dropDegrees {
             historyTick += 1
             if historyTick % 2 == 0 {
                 next.history.append(drop)
