@@ -1,0 +1,7 @@
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+[preview] The output directory /Users/einargudjonsson/personal/posture/dist/ does not exist. Did you run `astro build`?
+  Location:
+    /private/var/folders/c0/yrf909y13m506j4byh_zpx0w0000gn/T/bunx-501-astro@latest/node_modules/astro/dist/core/preview/index.js:38:13
+  Stack trace:
+    at preview (file:///private/var/folders/c0/yrf909y13m506j4byh_zpx0w0000gn/T/bunx-501-astro@latest/node_modules/astro/dist/core/preview/index.js:38:13)
+    at async runCommand (file:///private/var/folders/c0/yrf909y13m506j4byh_zpx0w0000gn/T/bunx-501-astro@latest/node_modules/astro/dist/cli/index.js:197:22)

@@ -49,20 +49,29 @@ private struct GeneralSettings: View {
     var body: some View {
         Form {
             Section {
+                // Captions stay short and roughly equal in width on purpose:
+                // LabeledContent drops its content onto a second line once the
+                // content is too wide, so a long caption in one row silently
+                // misaligns it against its neighbours.
                 SettingSlider(
                     title: "Sensitivity", value: $model.thresholdDegrees,
                     range: 5...30, step: 1,
-                    caption:
-                        "Counts as slouching past \(Int(model.thresholdDegrees))° below your baseline."
+                    caption: "Slouching starts \(Int(model.thresholdDegrees))° below baseline."
                 )
                 SettingSlider(
                     title: "Grace period", value: $model.sustainSeconds,
                     range: 5...180, step: 5,
-                    caption:
-                        "Ignores slouches shorter than \(Format.duration(model.sustainSeconds)), so glancing at your keyboard doesn't count."
+                    caption: "Ignores slouches under \(Format.duration(model.sustainSeconds))."
                 )
             } header: {
                 Text("Detection")
+            } footer: {
+                Text(
+                    "The grace period is what stops a glance down at your keyboard counting as a slouch."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             Section {
