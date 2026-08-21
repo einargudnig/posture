@@ -20,6 +20,11 @@ mkdir -p "$STAGE/.background"
 ditto "$APP" "$STAGE/Posture.app"
 ln -s /Applications "$STAGE/Applications"
 
+# The mounted volume gets the app's icon instead of the generic white disk.
+# This lives inside the image, so unlike a custom icon on the .dmg file itself
+# it survives being downloaded over HTTP.
+[ -f build/Posture.icns ] && /bin/cp -f build/Posture.icns "$STAGE/.VolumeIcon.icns"
+
 # A multi-resolution TIFF so the background stays sharp on Retina; a plain PNG
 # renders soft at 2x.
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
@@ -62,6 +67,15 @@ tell application "Finder"
   end tell
 end tell
 EOF
+
+# Give the mounted volume the app's icon. `.VolumeIcon.icns` plus SetFile is the
+# documented route but proved unreliable on a fresh image, so set it directly.
+if [ -f build/Posture.icns ]; then
+  swiftc -O -o build/set-icon scripts/set-icon.swift 2>/dev/null
+  build/set-icon build/Posture.icns "$MOUNT" \
+    || echo "▸ Volume icon skipped (DMG still valid)" >&2
+  SetFile -a C "$MOUNT" 2>/dev/null || true
+fi
 
 sync
 hdiutil detach "$MOUNT" -quiet
