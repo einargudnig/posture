@@ -142,6 +142,7 @@ final class PostureModel: ObservableObject {
     private var notchHUD: NotchHUD?
     private var currentStatus: MotionStatus = .waiting
     private var historyTick = 0
+    private var lastSampleAt: Date?
 
     /// Set by the window while it's on screen. With no window there is nothing
     /// to animate, so the sparkline stops accumulating and the snapshot stops
@@ -159,7 +160,7 @@ final class PostureModel: ObservableObject {
         analyzer.config.cooldownSeconds = Prefs.cooldownSeconds
         analyzer.config.maxCooldownSeconds = Prefs.maxCooldownSeconds
         analyzer.invertPitch = Prefs.invertPitch
-        if let baseline = Prefs.baseline { analyzer.calibrate(to: baseline) }
+        if let baseline = Prefs.baseline { analyzer.restoreBaseline(baseline) }
 
         motion.onPitch = { [weak self] pitch in
             MainActor.assumeIsolated { self?.handle(pitch: pitch) }
@@ -331,6 +332,10 @@ final class PostureModel: ObservableObject {
     // MARK: - Sensor
 
     private func handle(pitch: Double) {
+        // Samples arriving is the only trustworthy evidence the sensor is live.
+        lastSampleAt = Date()
+        currentStatus = .streaming
+
         if calibrationDeadline != nil {
             calibrationSamples.append(pitch)
             return
@@ -343,6 +348,19 @@ final class PostureModel: ObservableObject {
         // Calibration is timer-driven, not sample-driven. If the AirPods stop
         // streaming mid-calibration the countdown still has to end, or the UI
         // wedges on "Hold still…" forever.
+        // AirPods stop reporting motion the moment they leave your ears, but the
+        // disconnect delegate doesn't reliably fire — so `.streaming` would
+        // latch and the app would cheerfully report "Posture OK" while
+        // measuring nothing at all. Silence is the signal.
+        // `lastSampleAt` being nil means not one sample has ever arrived, which
+        // is just as stale as an old one — the earlier version skipped that case
+        // and let `.streaming` latch forever on the connect delegate alone.
+        if currentStatus == .streaming,
+           Date().timeIntervalSince(lastSampleAt ?? .distantPast) > 2 {
+            currentStatus = .waiting
+            analyzer.reset()
+        }
+
         var next = live
         next.motionStatus = currentStatus
 

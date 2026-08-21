@@ -71,6 +71,18 @@ final class PostureAnalyzer {
         return min(backedOff, config.maxCooldownSeconds)
     }
 
+    /// Restores a saved baseline without inventing a current reading.
+    ///
+    /// `calibrate(to:)` seeds `smoothedPitch`, which is right when a live
+    /// sample just produced the value — but at launch it made the UI show a
+    /// confident "0°" derived from the stored baseline before the sensor had
+    /// delivered anything at all.
+    func restoreBaseline(_ pitch: Double) {
+        baseline = pitch
+        smoothedPitch = nil
+        state = .unknown
+    }
+
     func calibrate(to pitch: Double) {
         baseline = pitch
         smoothedPitch = pitch
