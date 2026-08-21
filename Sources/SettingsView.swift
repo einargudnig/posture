@@ -178,8 +178,19 @@ private struct AdvancedSettings: View {
                 LabeledContent("Session stats") {
                     Button("Reset", action: model.resetStats)
                 }
+                LabeledContent("History") {
+                    HStack(spacing: 12) {
+                        Button("Reveal", action: model.revealHistory)
+                        Button("Clear", action: model.clearHistory)
+                    }
+                }
             } header: {
                 Text("State")
+            } footer: {
+                Text("History is a plain text file in Application Support, kept for 90 days. It never leaves your Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section {

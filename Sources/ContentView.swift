@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var model: PostureModel
     @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.openWindow) private var openWindow
     @State private var handledLaunch = false
 
     var body: some View {
@@ -33,6 +34,7 @@ struct ContentView: View {
                     tint: .secondary
                 )
                 stats
+                today
             } else {
                 Spacer().frame(height: 44)
             }
@@ -85,6 +87,23 @@ struct ContentView: View {
                 .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Session stats answer "how am I doing right now"; this answers "how has
+    /// today gone", which survives calibrating and quitting.
+    private var today: some View {
+        Button {
+            openWindow(id: "history")
+        } label: {
+            HStack(spacing: 4) {
+                Text(model.todayText)
+                Image(systemName: "chevron.right").font(.system(size: 8, weight: .semibold))
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help("Show history")
     }
 
     // MARK: - Primary action

@@ -131,6 +131,36 @@ that gets quieter when you're busy is one you don't reach for the mute button
 on. The cost is real — on a genuinely bad day it fades to a nudge every half
 hour and mostly lets you do it.
 
+### History
+
+Session stats answer "how am I doing right now" and reset when you calibrate.
+History answers "how has today gone", and survives calibrating, quitting and
+restarting.
+
+One JSON object per observed minute, appended to
+`~/Library/Application Support/Posture/history.jsonl`:
+
+```
+{"t":1755781200,"obs":58.2,"slouch":12.4,"drop":6.1}
+```
+
+Start-of-minute, seconds actually observed, seconds spent slouching, and the
+time-weighted mean head drop. Minutes where the sensor delivered nothing are
+simply absent — that absence is what keeps the denominator honest, so an hour
+with the AirPods out doesn't dilute the day.
+
+Two deliberate constraints:
+
+- **90-day retention**, trimmed at launch. That's ~43k lines, small enough to
+  aggregate on demand without needing a rollup index. Longer would need one.
+- **No percentage below ten observed minutes.** Eleven minutes of data should
+  not produce a confident "62% upright", so the UI shows the duration instead.
+
+Writes are best-effort throughout: a full disk or an unwritable directory must
+never interrupt monitoring, so nothing in the store throws into the sensor path.
+
+Still a plain file on your Mac. Nothing here changes the no-network claim.
+
 ### Why it costs nothing to run
 
 `PostureModel` feeds the analyzer at the full 25 Hz but publishes to SwiftUI at
@@ -180,6 +210,8 @@ Sources/
   PostureAnalyzer.swift   pure state machine — no clocks, no I/O, no UI
   HeadphoneMotion.swift   CMHeadphoneMotionManager wrapper
   PostureModel.swift      sensor + analyzer → one diffed @Published snapshot
+  HistoryStore.swift      append-only JSONL history and its rollups
+  HistoryView.swift       the History window
   PostureApp.swift        Window + Settings scenes, app delegate
   NotchHUD.swift          the live strip beside the notch
   WindowKeeper.swift      hides the window instead of closing it
@@ -188,7 +220,7 @@ Sources/
   SettingsView.swift      General / Alerts / Advanced
   Prefs.swift             UserDefaults
   Probe.swift             `--probe`: live angles in the terminal
-Tests/                    11 tests over the state machine
+Tests/                    21 tests over the state machine and history
 scripts/
   make-icon.swift         renders the .icns from code
   make-dmg-background.swift  renders the installer window background

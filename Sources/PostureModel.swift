@@ -63,6 +63,7 @@ final class PostureModel: ObservableObject {
                 motion.start()
             } else {
                 motion.stop()
+                flushBucket()
                 analyzer.reset()
                 currentStatus = .waiting
             }
@@ -144,6 +145,20 @@ final class PostureModel: ObservableObject {
     private var historyTick = 0
     private var lastSampleAt: Date?
 
+    private let store = HistoryStore()
+    /// The minute currently being accumulated. Flushed at each minute boundary,
+    /// and whenever monitoring stops, so a pause or a quit doesn't silently
+    /// discard the minute in progress.
+    private var bucketStart: Date?
+    private var bucketObserved: TimeInterval = 0
+    private var bucketSlouched: TimeInterval = 0
+    private var bucketDropSum: Double = 0
+    /// Running totals for the current local day, seeded from the file at launch
+    /// so the window never has to parse history to show one line.
+    @Published private(set) var todayObserved: TimeInterval = 0
+    @Published private(set) var todaySlouched: TimeInterval = 0
+    private var todayStart = Calendar.current.startOfDay(for: Date())
+
     /// Set by the window while it's on screen. With no window there is nothing
     /// to animate, so the sparkline stops accumulating and the snapshot stops
     /// changing — which is the whole point of the diffing above.
@@ -178,6 +193,7 @@ final class PostureModel: ObservableObject {
         // Don't steal focus during launch — SwiftUI is about to show the window.
         applyActivationPolicy(activate: false)
         applyNotchHUD()
+        loadHistory()
         publish()
     }
 
@@ -333,7 +349,9 @@ final class PostureModel: ObservableObject {
 
     private func handle(pitch: Double) {
         // Samples arriving is the only trustworthy evidence the sensor is live.
-        lastSampleAt = Date()
+        let now = Date()
+        let gap = lastSampleAt.map { now.timeIntervalSince($0) } ?? 0
+        lastSampleAt = now
         currentStatus = .streaming
 
         if calibrationDeadline != nil {
@@ -341,8 +359,97 @@ final class PostureModel: ObservableObject {
             return
         }
         guard enabled else { return }
-        if analyzer.ingest(pitch: pitch) == .alert { nag() }
+        let event = analyzer.ingest(pitch: pitch, at: now)
+        // Same guard the analyzer uses for its own stats: a gap of a second or
+        // more means the stream dropped out, not that a second was observed.
+        if gap > 0, gap < 1 { record(seconds: gap, at: now) }
+        if event == .alert { nag() }
     }
+
+    // MARK: - History
+
+    private func record(seconds: TimeInterval, at now: Date) {
+        let minute = Date(timeIntervalSince1970: (now.timeIntervalSince1970 / 60).rounded(.down) * 60)
+        if let start = bucketStart, start != minute { flushBucket() }
+        if bucketStart == nil || bucketStart != minute { bucketStart = minute }
+
+        bucketObserved += seconds
+        if analyzer.state == .slouching { bucketSlouched += seconds }
+        // Time-weighted so a mean isn't skewed by an uneven sample rate.
+        if let drop = analyzer.dropDegrees { bucketDropSum += drop * seconds }
+    }
+
+    /// Writes the minute in progress, if any. Safe to call at any time.
+    func flushBucket() {
+        defer {
+            bucketStart = nil
+            bucketObserved = 0
+            bucketSlouched = 0
+            bucketDropSum = 0
+        }
+        guard let start = bucketStart, bucketObserved > 0 else { return }
+        let record = MinuteRecord(
+            start: start,
+            observed: bucketObserved,
+            slouched: bucketSlouched,
+            meanDrop: bucketDropSum / bucketObserved)
+        store.append(record)
+        addToToday(record)
+    }
+
+    private func addToToday(_ record: MinuteRecord) {
+        let day = Calendar.current.startOfDay(for: record.start)
+        if day != todayStart {
+            todayStart = day
+            todayObserved = 0
+            todaySlouched = 0
+        }
+        todayObserved += record.observed
+        todaySlouched += record.slouched
+    }
+
+    /// Trims and seeds today's totals off the main thread — parsing history
+    /// must never delay launch.
+    private func loadHistory() {
+        let store = self.store
+        Task.detached(priority: .utility) {
+            store.trim()
+            let summary = HistoryRollup.day(store.load(), containing: Date())
+            await MainActor.run {
+                self.todayStart = summary.day
+                self.todayObserved = summary.observed
+                self.todaySlouched = summary.slouched
+            }
+        }
+    }
+
+    var todaySummary: DaySummary {
+        DaySummary(day: todayStart, observed: todayObserved, slouched: todaySlouched)
+    }
+
+    var todayText: String {
+        let summary = todaySummary
+        guard let upright = summary.uprightFraction else {
+            return summary.observed > 0
+                ? "Today · \(Format.duration(summary.observed)) so far"
+                : "Today · nothing recorded yet"
+        }
+        return String(
+            format: "Today · %.0f%% upright over %@",
+            upright * 100, Format.duration(summary.observed))
+    }
+
+    func clearHistory() {
+        store.clear()
+        todayObserved = 0
+        todaySlouched = 0
+    }
+
+    func revealHistory() {
+        NSWorkspace.shared.activateFileViewerSelecting([store.url])
+    }
+
+    var historyStore: HistoryStore { store }
 
     private func publish() {
         // Calibration is timer-driven, not sample-driven. If the AirPods stop
@@ -358,6 +465,7 @@ final class PostureModel: ObservableObject {
         if currentStatus == .streaming,
            Date().timeIntervalSince(lastSampleAt ?? .distantPast) > 2 {
             currentStatus = .waiting
+            flushBucket()
             analyzer.reset()
         }
 

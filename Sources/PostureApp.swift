@@ -8,6 +8,11 @@ final class PostureAppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
+    /// Writes the minute in progress so quitting doesn't discard it.
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated { PostureModel.shared.flushBucket() }
+    }
+
     /// Lets the reopen event rebuild the Window scene, which is how the notch
     /// panel gets the window back after you've closed it.
     func applicationShouldHandleReopen(
@@ -48,6 +53,13 @@ struct PostureApp: App {
                 Button("About Posture") { NSApp.orderFrontStandardAboutPanel(nil) }
             }
         }
+
+        Window("History", id: "history") {
+            HistoryView()
+                .environmentObject(model)
+        }
+        .windowResizability(.contentSize)
+        .keyboardShortcut("y", modifiers: .command)
 
         Settings {
             SettingsView()
