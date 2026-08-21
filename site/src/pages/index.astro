@@ -200,7 +200,17 @@ const spec: [string, string][] = [
               alt="The Posture app window: a green ring reading 4 degrees of 12, the status Posture OK, a sparkline of the last minute, and 52% upright over a 2 minute session"
               loading="lazy"
             />
-            <figcaption>4° of a 12° limit, and how the last minute went.</figcaption>
+            <figcaption>Upright: 4° of a 12° limit, and the last minute.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img
+              src="/posture-slouching.png"
+              width="640"
+              height="934"
+              alt="The Posture app window slouching: an amber ring reading 27 degrees against a 12 degree limit, the status Slouching, and one ignored nudge"
+              loading="lazy"
+            />
+            <figcaption>Past the limit, the ring fills and turns amber.</figcaption>
           </figure>
           <figure class="shot shot--wide">
             <img
@@ -448,22 +458,15 @@ const spec: [string, string][] = [
     margin-bottom: 0.45rem;
   }
 
-  /* Two windows side by side need a wider column than a single one did, so the
-     split favours the figures rather than the text. */
+  /* Three windows won't fit in half a split, so the text sits above them and
+     the figures get the full width. */
   .shot-band {
     display: grid;
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
+    gap: clamp(2rem, 4vw, 3rem);
   }
 
   .shot-band__text {
     max-width: var(--measure);
-  }
-
-  @media (min-width: 62rem) {
-    .shot-band {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    }
   }
 
   .shot-band h2 {
@@ -482,13 +485,13 @@ const spec: [string, string][] = [
 
   .shot {
     margin: 0;
-    flex: 1 1 12rem;
-    max-width: 15rem;
+    flex: 1 1 11rem;
+    max-width: 14.5rem;
   }
 
   .shot--wide {
-    flex: 1 1 15rem;
-    max-width: 19rem;
+    flex: 1 1 14rem;
+    max-width: 18.5rem;
   }
 
   .shot img {
