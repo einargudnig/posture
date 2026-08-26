@@ -1,18 +1,35 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "posture",
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-08-21",
 
-  // Assets-only Worker: no `main`, so there is no script to invoke and every
-  // request is served straight from Cloudflare's asset storage. Adding a Worker
-  // script in front would only add an invocation and latency per request — the
-  // page is static HTML with no server-side work to do. Response headers come
-  // from `public/_headers` instead.
+  // This was an assets-only Worker until there was something worth measuring.
+  // The script now exists solely to count visits and downloads server-side,
+  // which is what keeps an analytics beacon — and `script-src 'self'` — out of
+  // the page. `run_worker_first` holds the cost down: only the two pages and
+  // the two download files invoke it, so CSS, images and favicons are still
+  // served straight from asset storage. Response headers come from
+  // `public/_headers`.
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    // Note what is absent: /Posture.dmg. The disk image is served directly from
+    // asset storage, and the click is counted on the /download redirect
+    // instead. See src/worker.ts for why.
+    "run_worker_first": ["/", "/how-it-works", "/how-it-works/", "/download"]
   },
+
+  // Three-month retention, 100k writes/day on the free plan. Queried over the
+  // SQL API by `scripts/stats.sh`.
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "posture_site"
+    }
+  ],
 
   "observability": {
     "enabled": true
