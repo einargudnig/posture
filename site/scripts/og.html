@@ -1,0 +1,277 @@
+<!doctype html>
+<!--
+  Source for public/og.png — the card that unfurls in Slack, iMessage and
+  every social feed. Kept as markup rather than as an exported image so it
+  can be edited in a text editor, diffed, and re-rendered:
+
+    bun scripts/make-og.ts
+
+  1200x630 is the size every consumer crops from; anything smaller gets
+  upscaled. The composition is the page's hero at card scale, so the link
+  preview and the page a click later are recognisably the same thing.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..600&family=Instrument+Serif&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Same tokens as src/styles/global.css. Duplicated rather than imported
+         because this file is rendered by a browser on its own, with no build
+         step and no dev server running. */
+      :root {
+        --paper: oklch(0.973 0.006 85);
+        --paper-sunk: oklch(0.947 0.009 85);
+        --ink: oklch(0.235 0.014 62);
+        --ink-muted: oklch(0.47 0.012 62);
+        --ink-faint: oklch(0.64 0.009 62);
+        --rule: oklch(0.885 0.009 85);
+        --rule-strong: oklch(0.8 0.011 85);
+        --signal: oklch(0.6 0.135 158);
+        --warn: oklch(0.66 0.132 62);
+
+        --font-display: "Instrument Serif", Georgia, serif;
+        --font-body: "Instrument Sans", -apple-system, sans-serif;
+      }
+
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 1200px;
+        height: 630px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-synthesis-weight: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        width: 100%;
+        height: 100%;
+        padding: 62px 72px 58px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      /* Small caps label, as used throughout the site. */
+      .tag {
+        font-size: 17px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+
+      .masthead {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .wordmark {
+        font-family: var(--font-display);
+        font-size: 38px;
+        letter-spacing: -0.01em;
+        line-height: 1;
+      }
+
+      .masthead .rule {
+        flex: 1;
+        height: 1px;
+        background: var(--rule);
+      }
+
+      /* Text-weighted, like the hero: the figure gets the smaller share. */
+      .body {
+        display: grid;
+        grid-template-columns: minmax(0, 1.16fr) minmax(0, 0.84fr);
+        align-items: center;
+        gap: 44px;
+      }
+
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 90px;
+        line-height: 0.98;
+        letter-spacing: -0.015em;
+      }
+
+      .lede {
+        margin-top: 26px;
+        font-size: 25px;
+        line-height: 1.42;
+        color: var(--ink-muted);
+        max-width: 30ch;
+      }
+
+      figure {
+        margin: 0;
+      }
+
+      figure svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      footer {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        border-top: 1px solid var(--rule);
+        padding-top: 22px;
+      }
+
+      .url {
+        font-size: 21px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* The app's ring green, at the size it appears beside the notch. */
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--signal);
+      }
+
+      /* Figure -------------------------------------------------------------
+         The hero diagram: head-forward angle against a calibrated baseline,
+         with everything past the limit shaded. 26° against a 12° limit is a
+         realistic desk slouch, and far enough past it to read at card size.
+         Labels are set larger than on the page — this gets looked at as a
+         thumbnail. */
+      .zone {
+        fill: var(--warn);
+        opacity: 0.1;
+      }
+
+      .ref {
+        stroke: var(--rule-strong);
+        stroke-width: 2;
+        stroke-dasharray: 2 6;
+        stroke-linecap: round;
+      }
+
+      .limit {
+        stroke: var(--ink-faint);
+        stroke-width: 2;
+        stroke-dasharray: 8 6;
+      }
+
+      .arm line {
+        stroke: var(--warn);
+        stroke-width: 4;
+        stroke-linecap: round;
+      }
+
+      .arm circle {
+        fill: var(--warn);
+      }
+
+      .pivot {
+        fill: var(--ink);
+      }
+
+      .sweep {
+        fill: none;
+        stroke: var(--warn);
+        stroke-width: 2.5;
+        opacity: 0.6;
+      }
+
+      .axis-label {
+        font-family: var(--font-body);
+        font-size: 17px;
+        letter-spacing: 0.04em;
+        fill: var(--ink-faint);
+      }
+
+      .head-label {
+        fill: var(--warn);
+      }
+
+      /* Numerals use the sans, not the display serif: Instrument Serif's
+         angled stress reads as italic on digits, which is wrong for a
+         measurement. */
+      .reading {
+        font-family: var(--font-body);
+        font-size: 36px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        fill: var(--warn);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <header class="masthead">
+        <span class="wordmark">Posture</span>
+        <span class="rule"></span>
+        <span class="tag">AirPods motion · no camera</span>
+      </header>
+
+      <div class="body">
+        <div>
+          <h1>A protractor<br />for your neck.</h1>
+          <p class="lede">
+            Reads the angle of your head off your AirPods, and nudges you
+            when you slouch.
+          </p>
+        </div>
+
+        <figure>
+          <svg viewBox="46 26 428 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- everything past the limit -->
+            <path
+              class="zone"
+              d="M 60 60 L 382.8 128.6 A 330 330 0 0 1 356.6 204.7 Z"
+            ></path>
+
+            <!-- 0° reference -->
+            <line class="ref" x1="60" y1="60" x2="400" y2="60"></line>
+            <text class="axis-label" x="400" y="47" text-anchor="end">
+              baseline 0°
+            </text>
+
+            <!-- the configured limit -->
+            <line class="limit" x1="60" y1="60" x2="382.8" y2="128.6"></line>
+            <text class="axis-label" x="392" y="133">12° limit</text>
+
+            <!-- swept angle -->
+            <path class="sweep" d="M 150 60 A 90 90 0 0 1 140.9 99.5"></path>
+            <text class="reading" x="162" y="110">26°</text>
+
+            <!-- the measured head vector -->
+            <g class="arm">
+              <line x1="60" y1="60" x2="356.6" y2="204.7"></line>
+              <circle cx="356.6" cy="204.7" r="11"></circle>
+            </g>
+            <text class="axis-label head-label" x="374" y="211">your head</text>
+
+            <circle class="pivot" cx="60" cy="60" r="5.5"></circle>
+          </svg>
+        </figure>
+      </div>
+
+      <footer>
+        <span class="url"><span class="dot"></span>posture.einargudni.com</span>
+        <span class="tag">Free · macOS 14 · Apple Silicon</span>
+      </footer>
+    </div>
+  </body>
+</html>

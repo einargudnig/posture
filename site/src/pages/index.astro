@@ -32,6 +32,10 @@ import { join } from "node:path";
 // rewrites module URLs during the build, so they don't point at the source.
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
+// Absolute, and on the canonical host: crawlers won't resolve a relative one,
+// and the two hosts serving this page would otherwise each advertise their own.
+const ogImage = new URL("/og.png", Astro.site).href;
+
 const publicDir = join(process.cwd(), "public");
 const hasDownload = existsSync(join(publicDir, "Posture.dmg"));
 const sizeFile = join(publicDir, ".download-size");
@@ -71,6 +75,16 @@ const spec: [string, string][] = [
       content="Reads head angle from your AirPods and nudges you when you slouch. Every nudge you ignore doubles the wait before the next one."
     />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Posture" />
+    {/* Regenerate with `bun scripts/make-og.ts` after editing scripts/og.html. */}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A protractor for your neck: a diagram of head angle sitting at 26 degrees, well past a 12 degree limit"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

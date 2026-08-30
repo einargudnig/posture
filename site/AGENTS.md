@@ -8,6 +8,18 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+## Link preview
+
+`public/og.png` is generated, not drawn. Edit `scripts/og.html` and re-render:
+
+```
+bun scripts/make-og.ts
+```
+
+It needs Chrome or Chromium (set `CHROME` if it isn't in one of the usual
+places). Both pages point `og:image` at the result, so the size and the two
+`og:image:width`/`height` tags have to stay in step.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build
