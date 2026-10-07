@@ -14,6 +14,23 @@ STAGE="build/dmg-stage"
 
 [ -d "$APP" ] || { echo "No $APP — run ./build.sh first." >&2; exit 1; }
 
+# Finder addresses the volume by name, so a leftover "Posture" from an earlier
+# run would take the layout meant for this one.
+if [ -d "/Volumes/$VOLUME" ]; then
+  echo "/Volumes/$VOLUME is already mounted — eject it and run again." >&2
+  exit 1
+fi
+
+# Finder and Spotlight hold a freshly closed volume for a moment, so the first
+# detach often fails with "resource busy".
+detach() {
+  for _ in $(seq 15); do
+    hdiutil detach "$1" -quiet 2>/dev/null && return 0
+    sleep 1
+  done
+  hdiutil detach "$1" -force
+}
+
 rm -rf "$STAGE" "$DMG" build/Posture-rw.dmg
 mkdir -p "$STAGE/.background"
 
@@ -41,7 +58,7 @@ hdiutil create -srcfolder "$STAGE" -volname "$VOLUME" -fs HFS+ \
 
 MOUNT=$(hdiutil attach build/Posture-rw.dmg -readwrite -noverify -noautoopen \
   | grep -o '/Volumes/.*' | head -1)
-trap 'hdiutil detach "$MOUNT" -quiet 2>/dev/null || true' EXIT
+trap 'detach "$MOUNT" || true' EXIT
 
 # Finder scripting is the fragile part — if it fails the DMG is still perfectly
 # usable, just with a default icon arrangement, so it must not abort the build.
@@ -78,7 +95,7 @@ if [ -f build/Posture.icns ]; then
 fi
 
 sync
-hdiutil detach "$MOUNT" -quiet
+detach "$MOUNT"
 trap - EXIT
 
 # Compressed, read-only, for shipping.
