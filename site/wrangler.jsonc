@@ -31,6 +31,8 @@
     }
   ],
 
+  "routes": [{ "pattern": "posture.einargudni.com", "custom_domain": true }],
+
   "observability": {
     "enabled": true
   }
