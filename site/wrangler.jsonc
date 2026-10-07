@@ -23,7 +23,7 @@
   },
 
   // Three-month retention, 100k writes/day on the free plan. Queried over the
-  // SQL API by `scripts/stats.sh`.
+  // SQL API by `scripts/stats.ts`.
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS",
