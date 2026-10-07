@@ -10,11 +10,12 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy:cf": "astro build && wrangler deploy",
-    "deploy:vercel": "astro build && vercel deploy --prod --yes",
-    "deploy": "bun run deploy:cf && bun run deploy:vercel"
+    "deploy": "astro build && wrangler deploy"
   },
   "dependencies": {
     "astro": "^7.2.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.148.0"
   }
 }
